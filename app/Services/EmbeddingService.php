@@ -13,7 +13,10 @@ class EmbeddingService
             'text' => $text
         ]);
 
+        \Log::info('Embedding service response', ['status' => $response->status(), 'body' => $response->body()]);
+
         if ($response->failed()) {
+            \Log::error('Embedding service failed', ['status' => $response->status(), 'body' => $response->body()]);
             throw new \Exception('Embedding service failed');
         }
 

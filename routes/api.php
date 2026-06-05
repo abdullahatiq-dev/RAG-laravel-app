@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AskController;
 use App\Http\Controllers\DocumentController;
+use App\Models\Document;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -21,4 +22,13 @@ Route::get('/test-embedding', function () {
 });
 
 Route::post('/documents', [DocumentController::class, 'store']);
+Route::post('/documents/upload', [DocumentController::class, 'upload']);
+
 Route::post('/ask', [AskController::class, 'ask']);
+
+
+Route::get('/test', function(){
+
+    $document = Document::all();
+    dd($document);
+});

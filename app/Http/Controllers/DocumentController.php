@@ -7,6 +7,7 @@ use App\Models\DocumentChunk;
 use App\Services\ChunkingService;
 use App\Services\EmbeddingService;
 use Illuminate\Http\Request;
+use Smalot\PdfParser\Parser;
 
 class DocumentController extends Controller
 {
@@ -43,4 +44,52 @@ class DocumentController extends Controller
 
         return $document;
     }
+
+    public function upload(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:pdf'
+        ]);
+
+        // Save uploaded pdf
+        $path = $request->file('file')->store('documents');
+
+        // Extract text
+        $parser = new Parser();
+
+        $pdf = $parser->parseFile(storage_path('app/private/' . $path));
+
+        $content = $pdf->getText();
+
+        // Save document
+        $document = Document::create([
+            'title' => $request->file('file')->getClientOriginalName(),
+            'content' => $content,
+            'source' => 'pdf'
+        ]);
+
+        // Chunk text
+        $chunks = $this->chunkingService->chunk($content);
+
+        // Generate embeddings
+        foreach ($chunks as $chunk) {
+
+         \Log::info('Chunk', [
+        'chunk' => $chunk
+    ]);
+
+            $response = $this->embeddingService->generate($chunk);
+
+            DocumentChunk::create([
+                'document_id' => $document->id,
+                'content' => $chunk,
+                'embedding' => json_encode($response['embedding'])
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'PDF indexed successfully'
+        ]);
+    }
+
 }

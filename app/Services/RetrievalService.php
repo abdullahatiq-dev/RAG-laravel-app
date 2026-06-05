@@ -9,7 +9,7 @@ class RetrievalService
     public function search(array $queryEmbedding, int $top = 3): array
     {
         $chunks = DB::table('document_chunks')->get();
-        \Log::info('Retrieved document chunks', ['count' => count($chunks)]);
+
         $results = [];
 
         foreach ($chunks as $chunk) {
@@ -19,16 +19,8 @@ class RetrievalService
 
             $embedding = json_decode($chunk->embedding, true);
 
-            \Log::info('Embedding length', [
-                'length' => count($embedding)
-            ]);
-
-            if (!is_array($embedding)) {
-                \Log::error('Invalid embedding format', [
-                    'id' => $chunk->id,
-                    'raw' => $chunk->embedding
-                ]);
-                continue;
+            if (is_string($embedding)) {
+                $embedding = json_decode($embedding, true);
             }
 
             $score = $this->cosineSimilarity($queryEmbedding, $embedding);
